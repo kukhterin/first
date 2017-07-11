@@ -20,7 +20,7 @@ public:
 
 int main() 
 {
- Int i1(11), i2(9), i3;
+ Int i1(15), i2(9), i3;//blabla
  i1.show();
  i2.show();
  i3.intSum(i1,i2);
