@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/kukhterin/projects/Money/main.cpp
+iostream
+-
+string
+-
+iomanip
+-
+stdlib.h
+-
+sstream
+-
+

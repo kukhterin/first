@@ -1,0 +1,1 @@
+/usr/bin/c++   -g   CMakeFiles/money.dir/main.cpp.o  -o money -rdynamic 
