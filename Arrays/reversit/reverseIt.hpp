@@ -1,6 +1,1 @@
-#include <iostream>
-#include <string>
-#include <string.h>
-
-void reverseit(const char*)
-{}
+void reverseit(char []);

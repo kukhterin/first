@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
-project(reverseit)
+project(reverse)
 
-add_executable(reverseit main.cpp)
+add_executable(reverse main.cpp test.cpp reverseIt.cpp)
 
-install(TARGETS reverseit RUNTIME DESTINATION bin)
+install(TARGETS reverse RUNTIME DESTINATION bin)
