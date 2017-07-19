@@ -7,7 +7,7 @@ void test(const char* s1, const char* s2)
 {
   
   char* c1 = new char[strlen(s1) +1];
-  strncpy(c1, s2, strlen(s1)+1);
+  strncpy(c1, s1, strlen(s1)+1);
   
   reverseit(c1);
 

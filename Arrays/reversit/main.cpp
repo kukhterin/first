@@ -4,7 +4,7 @@ int main() {
   test("a", "a");
   test("ab", "ba");
   test("abc", "cba");
-  test("detartrated", "detartrated ");
+  test("detartrated", "detartrated");
        
     return 0;
 }
