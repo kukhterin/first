@@ -1,17 +1,14 @@
 namespace employees {
   
-  #ifndef _EMPLOYEE_
-  #define _EMPLOYEE_
+  #ifndef _EMPLOYEES_
+  #define _EMPLOYEES_
 
   class Employee
   {
   public:
    virtual double salary() = 0;
   };
-  #endif
   
-  #ifndef _MANAGER_
-  #define _MANAGER_
 
   class Manager : public Employee
   {
@@ -19,13 +16,8 @@ namespace employees {
     double salary();
   };
   
-  #endif
-
   ////////////////////////////////////////////////
   
-  #ifndef _AGENT_
-  #define _AGENT_
-
   class Agent : public Employee
   {
   private:
@@ -35,12 +27,7 @@ namespace employees {
     double salary();
   };
   
-  #endif
-
   ////////////////////////////////////////////////
-  
-  #ifndef _WORKER_
-  #define _WORKER_
 
   class Worker : public Employee
   {
@@ -50,6 +37,8 @@ namespace employees {
     Worker(double);
     double salary();
   };
-
+  
   #endif
+
+  
 }
