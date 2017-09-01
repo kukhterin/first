@@ -2,18 +2,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdlib>
-#include "Copy.hpp"
+#include "copy.hpp"
 
-
-Copy::Copy(char* source, char* dest) : source_(source), dest_(dest)
-{
-	cp();
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Copy::cp()
+void copy(char* source, char* dest)
 {
 	const size_t BUF_SIZE = 1024;
 	char buf[BUF_SIZE];
@@ -21,7 +12,7 @@ void Copy::cp()
 	int input_f_d, output_f_d, open_flags;
 	mode_t file_perms;
   
-	input_f_d = open(source_, O_RDONLY);
+	input_f_d = open(source, O_RDONLY);
 	if(input_f_d == -1)
 	{
 		std::cerr << "Can't open source file!" << std::endl;
@@ -30,11 +21,11 @@ void Copy::cp()
   
 	open_flags = O_CREAT | S_IRWXU | O_RDWR | O_TRUNC;
 	file_perms = S_IRWXU | S_IRWXG |S_IRWXO;
-	output_f_d = open(dest_, open_flags, file_perms);
+	output_f_d = open(dest, open_flags, file_perms);
 	
 	if(output_f_d == -1)
 	{
-		std::cerr << "File already exist!" << std::endl;
+		std::cerr << "Copy error!" << std::endl;
 		exit(1);
 	}
   
