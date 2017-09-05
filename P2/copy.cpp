@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "copy.hpp"
 
 bool copy(char* source, char* dest)
@@ -31,6 +33,7 @@ bool copy(char* source, char* dest)
 		if(output_f_d == -1)
 		{
 			std::cerr << "Copy error!" << std::endl;
+			std::remove (dest); //delete file, if can't copy successfully
 			return false;
 		}
 	
@@ -45,30 +48,44 @@ bool copy(char* source, char* dest)
 			if(num_read == -1)
 			{
 			std::cerr << "Reading error!" << std::endl;
+			std::remove (dest); //delete file, if cant copy successfully
 			return false;
 			}
 		}	
 	}
+	
 	else //if dest already exist
 	{
 		char buf2[BUF_SIZE];
 		
-		while((num_read = read(input_f_d, buf, BUF_SIZE)) > 0)
-		{	
-			read(output_f_d, buf2, BUF_SIZE);
-			if(std::memcmp(&buf, &buf2, BUF_SIZE) != 0) // compare source and dest
-			{
-			std::cerr << "Destination folder already contain dufferent file with the same name!" << std::endl;
-			return false;
-			}
-		}	
+		struct stat attr1;
+		struct stat attr2;
+		stat(source, &attr1);
+		stat(dest, &attr2);
 		
+		if(attr1.st_mode != attr2.st_mode)
+		{
+			std::cerr << "Destination folder already contain different type file with the same name!" << std::endl;
+			return false;
+		}
+		
+		else
+		{
+			while((num_read = read(input_f_d, buf, BUF_SIZE)) > 0)
+			{	
+				read(output_f_d, buf2, BUF_SIZE);
+				if(std::memcmp(&buf, &buf2, BUF_SIZE) != 0) // compare source and dest
+				{
+				std::cerr << "Destination folder already contain different file with the same name!" << std::endl;
+				return false;
+				}
+			}
+		}
 		std::cout << "Requested destination file already exist!" << std::endl;
-		return true;
+		return true;	
 	}
-  
-
 	
+  
 	if(close(input_f_d) == -1)
 	{
 		std::cerr << "Error in closing input!";
