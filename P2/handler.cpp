@@ -4,47 +4,46 @@
 #include "handler.hpp"
 #include "execute.hpp"
 
-int handler(int errcode)
+bool handler(int errcode)
 { 
-	int execution_fault = 0;
 	
 	if(WIFEXITED(errcode))
 	{
 		std::cout << "Sucessfull execution" << std::endl;
+		return true;
 	}
       
 	else if(WIFSIGNALED(errcode))
 	{
 		std::cout << "\nExecution was killed by signal: " << strsignal(WTERMSIG(errcode));
-		execution_fault++;
+		return false;
 	}
       
 	#ifdef WCOREDUMP
 	else if(WCOREDUMP(errcode))
 	{
 		std::cout << "\nExecution faild: core dumped";
-		execution_fault;
+		return false;
 	}
 	#endif
        
 	else if(WIFSTOPPED(errcode))
 	{
 		std::cout << "\nExecution was stopped by signal: " << strsignal(WSTOPSIG(errcode));
-		execution_fault++;
+		return false;
 	}
 	
 	#ifdef WIFCONTINUED
 	else if(WIFCONTINUED(errcode))
 	{
 		std::cout << "\nExecution don't normally completed, process continued";
-		execution_fault++;
+		return false;
 	}	
 	#endif
       
 	else
 	{
 		std::cout << "\nSomething unexpected happend";
-		execution_fault++;
+		return false;
 	}
-	return execution_fault;
 }

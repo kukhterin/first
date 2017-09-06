@@ -87,6 +87,7 @@ bool copy(char* source, char* dest)
 	
   
 	if(close(input_f_d) == -1)
+		
 	{
 		std::cerr << "Error in closing input!";
 		return false;
