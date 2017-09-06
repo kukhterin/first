@@ -4,14 +4,15 @@
 #include <sys/wait.h> 
 #include "execute.hpp"
   
-bool execute(char* file, bool(*handler)(int errcode)) 
+int execute(char* file) 
 {
+	int status;
 	pid_t P1 = fork();
 		
 	if(P1 < 0)
 	{
 		std::cout << "\nFork error!";
-		return false;
+		exit(1);
 	}
     
 	else if(P1 == 0)
@@ -22,9 +23,7 @@ bool execute(char* file, bool(*handler)(int errcode))
    
 	else 
 	{	  
-		int status;
-		pid_t pid;
-		pid = waitpid(P1, &status, 0);
-		return handler(status); // handler return false in case of error, so in this place we combine the making the callback, the sending int the status to the handler and also receive the handlers returning value
+		waitpid(P1, &status, 0);
+		return status;
 	}
 }
