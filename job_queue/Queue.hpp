@@ -2,6 +2,7 @@
 #include <dirent.h>// for file listing from directory
 #include <string>
 #include <pthread.h>
+#include "get_file.hpp"
 #ifndef _QUEUE_
 #define _QUEUE_
 
@@ -10,15 +11,14 @@ class Queue
 private: 
 	std::queue<std::string> j_queue_;
 	pthread_mutex_t mtx_;
-	pthread_cond_t cond_ ;
 	DIR* mydir_;
 	struct dirent* entry_;
 	std::string path_;
 public:
+	
 	Queue();
 	void put();
 	void get();
-	
 	template <class A, void(A::*F)()>
 	static void* func(void* p)
 	{
