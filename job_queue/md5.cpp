@@ -11,8 +11,6 @@
 #include <openssl/md5.h>
 #include "md5.hpp"
 
-//g++ -o my_queue main.cpp Queue.cpp md5.cpp -pthread -lssl -lcrypto
-
 std::string md5_hash(std::string path)//char* path
 {
 	unsigned char uc_result[MD5_DIGEST_LENGTH];
