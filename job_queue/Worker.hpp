@@ -7,12 +7,11 @@ class Worker
 private: 
 	Worker(const Worker&);
 	void operator=(const Worker&);
-	Queue* queue_;
+	Queue &queue_;
 	
 public:
 	
-	Worker(Queue*);
-	~Worker();
+	Worker(Queue&);
 	void run();
 		
 };

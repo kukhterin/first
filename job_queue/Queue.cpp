@@ -39,6 +39,7 @@ void Queue::put(std::string s)
 	if(status_ != 0)
 	{
 		std::cout << strerror(status_);
+		mutex_unlock(&mtx_);
 		return;
 	}
 	mutex_unlock(&mtx_);

@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 	}	
 			
 	Queue JQ;
-	Worker worker(&JQ);
+	Worker worker(JQ);
 			
 	for(size_t i = 0; i < SIZE; i++)
 	{
@@ -68,7 +68,5 @@ int main(int argc, char **argv) {
 			exit(1);
 		}	
 	}
-	
-	JQ.~Queue();
-	exit(EXIT_SUCCESS);
+	return 0;
 }

@@ -5,6 +5,7 @@
 #include <cerrno>
 #include <time.h>  
 #include <sys/time.h>
+#include <iostream>
 
 
 
@@ -14,7 +15,7 @@ void mutex_lock(pthread_mutex_t* mtx)
 	if(status != 0)
 	{
 		std::cout << strerror(status);
-		exit(1);
+		return;
 	}
 }
 
@@ -35,36 +36,9 @@ void mutex_unlock(pthread_mutex_t* mtx)
 		if(status != 0)
 		{
 			std::cout << strerror(status);
-			exit(1);
+			return;
 		}
 }
-
-bool timedwait(pthread_cond_t* cond, pthread_mutex_t* mutex,  int sec_to_wait)
-{
-	int status = 0;
-	struct timespec   ts;
-	struct timeval    tp;
-	status =  gettimeofday(&tp, NULL);
-	ts.tv_sec  = tp.tv_sec;
-    ts.tv_nsec = tp.tv_usec * 1000;
-    ts.tv_sec += sec_to_wait;
-	
-	status = pthread_cond_timedwait(cond, mutex, &ts);
-	if (status == ETIMEDOUT) 
-	{
-		status = pthread_mutex_unlock(mutex);
-		if(status != 0)
-		{
-			std::cout << strerror(status);
-			exit(1);
-		}
-		return false;
-	}
-	return true;
-}
-
-
-
 
 
 
