@@ -46,29 +46,16 @@ int main(int argc, char **argv) {
 
 	while(true)
 	{
-		if(mutex_trylock(&(JQ.mtx_))) 
-			continue;
 		if(entry = readdir(mydir)) 
 		{
 			std::string tmp = (std::string)(entry->d_name);
-			std::string result = path + "/";
-			if(tmp != "." && tmp != "..")
-			{
-				result += tmp;
-				JQ.put(result);
-				status = pthread_cond_signal(&(JQ.cond_));
-				if(status != 0)
-				{
-					std::cout << strerror(status);
-					exit(1);
-				}
-				mutex_unlock(&(JQ.mtx_));
+			if(tmp == "." || tmp == "..")
 				continue;
-			}
-			mutex_unlock(&(JQ.mtx_));
+			std::string result = path + "/";
+			result += tmp;
+			JQ.put(result);
 			continue;
 		}
-		mutex_unlock(&(JQ.mtx_));
 		break;	
 	}	
 	

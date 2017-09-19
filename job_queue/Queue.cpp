@@ -1,7 +1,10 @@
-#include "Queue.hpp"
 #include <iostream>
 #include <pthread.h>
 #include <time.h>
+#include <string.h>
+#include "Queue.hpp"
+#include "mutex_switcher.hpp"
+
 
 Queue::Queue()
 {
@@ -19,6 +22,8 @@ Queue::~Queue()
 
 std::string Queue::get()
 {	
+	if(!(timedwait(&cond_, &mtx_, 1)))
+		return "";
 	std::string result = j_queue_.front();
 	j_queue_.pop();
 	return result;
@@ -26,11 +31,13 @@ std::string Queue::get()
 		
 void Queue::put(std::string s)
 {
+	mutex_lock(&mtx_);
 	j_queue_.push(s);
+	status_ = pthread_cond_signal(&cond_);
+	if(status_ != 0)
+	{
+		std::cout << strerror(status_);
+		return;
+	}
+	mutex_unlock(&mtx_);
 }
-
-bool Queue::is_empty()
-{
-	return j_queue_.empty();
-}
-

@@ -10,16 +10,17 @@ private:
 	Queue(const Queue&);
 	void operator=(const Queue&);
 	std::queue<std::string> j_queue_;
+	pthread_mutex_t mtx_;
+	pthread_cond_t cond_;
+	
+	
+	int status_;
 	
 public:
-	
 	Queue();
 	~Queue();
 	void put(std::string);
 	std::string get();
-	bool is_empty();
-	pthread_mutex_t mtx_;
-	pthread_cond_t cond_;	
 };
 
 #endif
