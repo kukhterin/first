@@ -1,5 +1,4 @@
 #include <queue>
-#include <dirent.h>// for file listing from directory
 #include <string>
 #include <pthread.h>
 #ifndef _QUEUE_
@@ -8,27 +7,19 @@
 class Queue
 {
 private: 
+	Queue(const Queue&);
+	void operator=(const Queue&);
 	std::queue<std::string> j_queue_;
-	pthread_mutex_t mtx_;
-	pthread_cond_t cond_;
-	DIR* mydir_;
-	struct dirent* entry_;
-	std::string path_;
 	
 public:
 	
 	Queue();
 	~Queue();
-	void put();
-	void get();
-	template <class A, void(A::*F)()>
-	static void* func(void* p)
-	{
-		A* a = static_cast<A*>(p);
-		(a->*F)();//a->*F() - totally mot working
-		return 0;
-		
-	}
+	void put(std::string);
+	std::string get();
+	bool is_empty();
+	pthread_mutex_t mtx_;
+	pthread_cond_t cond_;	
 };
 
 #endif

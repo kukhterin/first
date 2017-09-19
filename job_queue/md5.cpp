@@ -17,6 +17,7 @@ std::string md5_hash(std::string path)//char* path
 	int file_descript;
     unsigned long file_size;
     char* file_buffer;
+	MD5_CTX md5handler;
 
     file_descript = open(path.c_str(), O_RDONLY);//
     if(file_descript < 0) exit(-1);
@@ -34,9 +35,9 @@ std::string md5_hash(std::string path)//char* path
 																						//mmap return ptr to place with mapped data;  
 																						//void * mmap(void *start, size_t length, int prot , int flags, int fd, off_t offset); 
 
-   MD5((unsigned char*) file_buffer, file_size, uc_result);
-   munmap(file_buffer, file_size); 														//munmap return 0 in success
-																						//int munmap(void *start, size_t length); 
+	MD5_Init(&md5handler);
+	MD5_Update(&md5handler, (const void*)(file_buffer), file_size);
+	MD5_Final(uc_result,&md5handler);														
 	
 	//Transfer unsigned char to hex string
    

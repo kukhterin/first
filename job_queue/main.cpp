@@ -1,23 +1,42 @@
-#define _GLIBCXX_USE_CXX11_ABI 0
 #include <iostream>
 #include <pthread.h>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <string>
+#include <dirent.h>
 #include "Queue.hpp"
+#include "mutex_switcher.hpp"
+#include "Worker.hpp"
+#include "thread_func.hpp"
 
-// g++ -o md5  main.cpp md5.cpp mutex_switcher.cpp put_get_file.cpp Queue.cpp -pthread -lssl -lcrypto 
+// g++ -o result  main.cpp md5.cpp mutex_switcher.cpp Queue.cpp Worker.cpp  -pthread -lssl -lcrypto
 int main(int argc, char **argv) {
-    
-	pthread_t t0, t1, t2, t3; 
-	size_t SIZE = 4;
+   
+	std::string path;
+	pthread_t t1, t2, t3; 
+	size_t SIZE = 3;
+	pthread_t threads[SIZE] = {t1, t2, t3};
 	int status;
-	Queue JQ;
-	pthread_t threads[] = {t0, t1, t2, t3};
-	
-	for(size_t i = 1; i < SIZE; i++)
+	DIR* mydir;
+	struct dirent* entry;
+
+	std::cout << "Insert path to your directory: " << std::endl;
+	std::cin >> path;
+	//path = "/home/kukhterin/projects/JobQueue/New";
+	mydir = opendir(path.c_str()); 
+    if(mydir == NULL) 
 	{
-		status = pthread_create (&threads[i], NULL, Queue::func<Queue, &Queue::get>, &JQ);
+		std::cout << "Opendir Error";
+		exit(-1);
+	}	
+			
+	Queue JQ;
+	Worker worker(&JQ);
+			
+	for(size_t i = 0; i < SIZE; i++)
+	{
+		status = pthread_create (&threads[i], NULL, thread_func<Worker, &Worker::run>, &worker);
 		if(status != 0)
 		{
 			std::cout << strerror(status);
@@ -25,24 +44,44 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	status = pthread_create(&t0, NULL, Queue::func<Queue, &Queue::put>, &JQ);
-	if(status != 0)
+	while(true)
 	{
-		std::cout << strerror(status);
-		exit(1);
-	}
-	
-//////////////////////////////////////////////////////////////////////////////////
+		if(mutex_trylock(&(JQ.mtx_))) 
+			continue;
+		if(entry = readdir(mydir)) 
+		{
+			std::string tmp = (std::string)(entry->d_name);
+			std::string result = path + "/";
+			if(tmp != "." && tmp != "..")
+			{
+				result += tmp;
+				JQ.put(result);
+				status = pthread_cond_signal(&(JQ.cond_));
+				if(status != 0)
+				{
+					std::cout << strerror(status);
+					exit(1);
+				}
+				mutex_unlock(&(JQ.mtx_));
+				continue;
+			}
+			mutex_unlock(&(JQ.mtx_));
+			continue;
+		}
+		mutex_unlock(&(JQ.mtx_));
+		break;	
+	}	
 	
 	for(size_t i = SIZE-1; i >= 0; i--)
 	{
-		status = pthread_join (threads[i], NULL);
+		status = pthread_join(threads[i], NULL);
 		if(status != 0)
 		{
 			std::cout << strerror(status);
 			exit(1);
 		}	
 	}
+	
 	JQ.~Queue();
 	exit(EXIT_SUCCESS);
 }
