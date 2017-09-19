@@ -22,10 +22,11 @@ Queue::~Queue()
 
 std::string Queue::get()
 {	
-	if(!(timedwait(&cond_, &mtx_, 1)))
+	if(!(timedwait(&cond_, &mtx_, 2)))
 		return "";
 	std::string result = j_queue_.front();
 	j_queue_.pop();
+	mutex_unlock(&mtx_);
 	return result;
 }
 		
