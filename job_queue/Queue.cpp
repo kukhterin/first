@@ -22,8 +22,9 @@ Queue::~Queue()
 
 std::string Queue::get()
 {	
-	if(!(timedwait(&cond_, &mtx_, 2)))
-		return "";
+	mutex_lock(&mtx_);
+	if(j_queue_.empty())
+		pthread_cond_wait(&cond_, &mtx_);
 	std::string result = j_queue_.front();
 	j_queue_.pop();
 	mutex_unlock(&mtx_);
