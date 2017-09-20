@@ -19,7 +19,7 @@ public:
 	~Queue();
 	void put(std::string);
 	std::string get();
-	void is_closed();
+	void close_up();
 };
 
 #endif

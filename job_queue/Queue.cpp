@@ -48,20 +48,23 @@ void Queue::put(std::string s)
 	int status_ = pthread_cond_signal(&cond_);
 	if(status_ != 0)
 	{
-		std::cout << strerror(status_);
 		mutex_unlock(&mtx_);
+		std::cout << strerror(status_);
 		return;
 	}
 	mutex_unlock(&mtx_);
 }
 
-void Queue::is_closed()
+void Queue::close_up()
 {
+	mutex_lock(&mtx_);
 	closed_ = true;
 	int status_ = pthread_cond_broadcast(&cond_);
 	if(status_ != 0)
 	{
+		mutex_unlock(&mtx_);
 		std::cout << strerror(status_);
 		return;
 	}
+	mutex_unlock(&mtx_);
 }

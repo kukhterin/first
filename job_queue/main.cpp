@@ -23,7 +23,6 @@ int main(int argc, char **argv) {
 
 	std::cout << "Insert path to your directory: " << std::endl;
 	std::cin >> path;
-	//path = "/home/kukhterin/projects/JobQueue/New";
 	mydir = opendir(path.c_str()); 
     if(mydir == NULL) 
 	{
@@ -53,7 +52,7 @@ int main(int argc, char **argv) {
 		result += tmp;
 		JQ.put(result);
 	}
-	JQ.is_closed();
+	JQ.close_up();
 	
 	for(size_t i = 0; i < SIZE; i++)
 	{
