@@ -7,7 +7,6 @@ Worker::Worker(Queue &q) : queue_(q)
 
 void Worker::run()
 {
-	int status = 0;
 	while(true)
 	{
 		std::string result = (queue_.get());

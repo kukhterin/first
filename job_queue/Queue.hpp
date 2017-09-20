@@ -12,15 +12,14 @@ private:
 	std::queue<std::string> j_queue_;
 	pthread_mutex_t mtx_;
 	pthread_cond_t cond_;
-	
-	
-	int status_;
+	bool closed_;
 	
 public:
 	Queue();
 	~Queue();
 	void put(std::string);
 	std::string get();
+	void is_closed();
 };
 
 #endif

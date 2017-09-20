@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
 	std::cout << "Insert path to your directory: " << std::endl;
 	std::cin >> path;
-	path = "/home/kukhterin/projects/JobQueue/New";
+	//path = "/home/kukhterin/projects/JobQueue/New";
 	mydir = opendir(path.c_str()); 
     if(mydir == NULL) 
 	{
@@ -44,22 +44,16 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	while(true)
+	while(entry = readdir(mydir))
 	{
-		if(entry = readdir(mydir)) 
-		{
-			std::string tmp = (std::string)(entry->d_name);
-			if(tmp == "." || tmp == "..")
-				continue;
-			std::string result = path + "/";
-			result += tmp;
-			JQ.put(result);
+		std::string tmp = (std::string)(entry->d_name);
+		if(tmp == "." || tmp == "..")
 			continue;
-		}
-		for(int i = 0; i < SIZE; i++)
-			JQ.put("");
-		break;	
-	}	
+		std::string result = path + "/";
+		result += tmp;
+		JQ.put(result);
+	}
+	JQ.is_closed();
 	
 	for(size_t i = 0; i < SIZE; i++)
 	{
@@ -70,6 +64,6 @@ int main(int argc, char **argv) {
 			exit(1);
 		}	
 	}
-
+	
 	return 0;
 }
