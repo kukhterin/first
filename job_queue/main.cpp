@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
 	std::cout << "Insert path to your directory: " << std::endl;
 	std::cin >> path;
-	//path = "/home/kukhterin/projects/JobQueue/New";
+	path = "/home/kukhterin/projects/JobQueue/New";
 	mydir = opendir(path.c_str()); 
     if(mydir == NULL) 
 	{
@@ -56,10 +56,12 @@ int main(int argc, char **argv) {
 			JQ.put(result);
 			continue;
 		}
+		for(int i = 0; i < SIZE; i++)
+			JQ.put("");
 		break;	
 	}	
 	
-	for(size_t i = SIZE-1; i >= 0; i--)
+	for(size_t i = 0; i < SIZE; i++)
 	{
 		status = pthread_join(threads[i], NULL);
 		if(status != 0)
@@ -68,5 +70,6 @@ int main(int argc, char **argv) {
 			exit(1);
 		}	
 	}
+
 	return 0;
 }

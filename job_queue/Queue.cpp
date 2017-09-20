@@ -17,7 +17,6 @@ Queue::~Queue()
 {
 	pthread_mutex_destroy(&mtx_);
 	pthread_cond_destroy(&cond_);
-	std::cout << "exit" << std::endl;
 }
 
 std::string Queue::get()

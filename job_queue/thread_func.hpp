@@ -6,6 +6,7 @@ template <class A, void(A::*F)()>
 	{
 		A* a = static_cast<A*>(p);
 		(a->*F)();
+		
 		return 0;
 		
 	}
