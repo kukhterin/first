@@ -1,6 +1,7 @@
-#include <iostream>
+#include <cstdio>
 #include "Worker.hpp"
 #include "md5.hpp"
+
 
 Worker::Worker(Queue &q) : queue_(q)
 {}
@@ -12,7 +13,7 @@ void Worker::run()
 		std::string result = (queue_.get());
 		if(result == "")
 			break;
-		std::cout << "MD5 sum of " << result << ": " << md5_hash(result) << std::endl;
+		std::printf("MD5 sum of %s: %s\n", result.c_str(), (md5_hash(result)).c_str());
 		continue;
 	}
 	return;
