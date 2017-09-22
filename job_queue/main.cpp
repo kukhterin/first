@@ -6,7 +6,6 @@
 #include <string>
 #include <dirent.h>
 #include "Queue.hpp"
-#include "mutex_switcher.hpp"
 #include "Worker.hpp"
 #include "thread_func.hpp"
 
@@ -22,6 +21,7 @@ int main(int argc, char **argv) {
 	DIR* mydir;
 	struct dirent* entry;
 
+	//path = "/home/kukhterin/projects/JobQueue/New";
 	std::cout << "Insert path to your directory: " << std::endl;
 	std::getline ( std::cin, path);
 	mydir = opendir(path.c_str()); 
