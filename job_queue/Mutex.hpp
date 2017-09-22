@@ -1,9 +1,11 @@
+#include <pthread.h>
+#include "CondVar.hpp"
 #ifndef _MUTEX_
 #define _MUTEX_
-#include <pthread.h>
 
 class Mutex
 {
+friend class CondVar;
 private:
 	pthread_mutex_t mtx_;
 	Mutex(const Mutex&);
@@ -13,7 +15,6 @@ public:
 	~Mutex();
 	void lock();
 	void unlock();
-	void wait(pthread_cond_t&);
 
 };
 	

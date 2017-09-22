@@ -1,6 +1,5 @@
 #ifndef _CONDVAR_
 #define _CONDVAR_
-#include <pthread.h>
 #include "Mutex.hpp"
 
 class CondVar

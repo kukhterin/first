@@ -32,13 +32,3 @@ void Mutex::unlock()
 			return;
 		}
 }
-
-void Mutex::wait(pthread_cond_t &cond)
-{
-	int status = pthread_cond_wait(&cond, &mtx_);
-		if(status != 0)
-		{
-			std::cout << strerror(status);
-			return;
-		}
-}

@@ -32,5 +32,10 @@ void CondVar::broadcast()
 
 void CondVar::wait(Mutex &mutex)
 {
-	mutex.wait(cond_);
+	int status = pthread_cond_wait(&cond_, &(mutex.mtx_));
+		if(status != 0)
+		{
+			std::cout << strerror(status);
+			return;
+		}
 }
