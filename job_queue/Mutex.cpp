@@ -14,9 +14,31 @@ Mutex::~Mutex()
 	pthread_mutex_destroy(&mtx_);
 }
 
-pthread_mutex_t* Mutex::get_m()
+void Mutex::lock()
 {
-	return &mtx_;
+	int status = pthread_mutex_lock(&mtx_);
+	if(status != 0)
+	{
+		std::cout << strerror(status);
+	}
 }
 
+void Mutex::unlock()
+{
+	int status = pthread_mutex_unlock(&mtx_);
+		if(status != 0)
+		{
+			std::cout << strerror(status);
+			return;
+		}
+}
 
+void Mutex::wait(pthread_cond_t &cond)
+{
+	int status = pthread_cond_wait(&cond, &mtx_);
+		if(status != 0)
+		{
+			std::cout << strerror(status);
+			return;
+		}
+}

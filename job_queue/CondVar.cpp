@@ -30,7 +30,7 @@ void CondVar::broadcast()
 	}
 }
 
-pthread_cond_t* CondVar::get_c()
+void CondVar::wait(Mutex &mutex)
 {
-	return &cond_;
+	mutex.wait(cond_);
 }

@@ -11,7 +11,10 @@ private:
 public:
 	Mutex();
 	~Mutex();
-	pthread_mutex_t* get_m();
+	void lock();
+	void unlock();
+	void wait(pthread_cond_t&);
+
 };
 	
 #endif

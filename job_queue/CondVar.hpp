@@ -1,6 +1,7 @@
 #ifndef _CONDVAR_
 #define _CONDVAR_
 #include <pthread.h>
+#include "Mutex.hpp"
 
 class CondVar
 {
@@ -13,7 +14,7 @@ public:
 	~CondVar();
 	void signal();
 	void broadcast();
-	pthread_cond_t* get_c();
+	void wait(Mutex&);
 };
 	
 #endif
