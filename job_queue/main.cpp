@@ -19,9 +19,9 @@ int main(int argc, char **argv) {
 	DIR* mydir;
 	struct dirent* entry;
 
-	path = "/home/kukhterin/projects/JobQueue/New";
-	//std::cout << "Insert path to your directory: " << std::endl;
-	//std::getline ( std::cin, path);
+	//path = "/home/kukhterin/projects/JobQueue/New";
+	std::cout << "Insert path to your directory: " << std::endl;
+	std::getline ( std::cin, path);
 	mydir = opendir(path.c_str()); 
     if(mydir == NULL) 
 	{
@@ -32,9 +32,9 @@ int main(int argc, char **argv) {
 	Queue JQ;
 	Worker worker(JQ);
 	
-	Thread t1(NULL, thread_func<Worker, &Worker::run>, &worker);	
-	Thread t2(NULL, thread_func<Worker, &Worker::run>, &worker);	
-	Thread t3(NULL, thread_func<Worker, &Worker::run>, &worker);	
+	Thread<Worker, &Worker::run> t1(NULL, &worker);	
+	Thread<Worker, &Worker::run> t2(NULL, &worker);	
+	Thread<Worker, &Worker::run> t3(NULL, &worker);	
 
 	while(entry = readdir(mydir))
 	{
