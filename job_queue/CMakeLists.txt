@@ -3,7 +3,7 @@ project(jobqueue)
 
 find_package(OpenSSL)
 
-add_executable(jobqueue main.cpp Queue.cpp md5.cpp Mutex.cpp ScopedLock.cpp Worker.cpp )
+add_executable(jobqueue main.cpp Queue.cpp md5.cpp Mutex.cpp ScopedLock.cpp Worker.cpp Thread.cpp CondVar.cpp)
 
 target_link_libraries(jobqueue ${OPENSSL_LIBRARIES})
 
