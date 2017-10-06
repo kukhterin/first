@@ -151,20 +151,32 @@ void Server::startServer()
 
 void Server::respond(int fd)
 {
-	int len = 10000;
-	char mesg[len], *reqline[3], data_to_send[BYTES], path[100];
-	int rcvd, bytes_read, ofd;
-
-	memset( (void*)mesg, (int)'\0', len);
-
-	rcvd = recv(fd, mesg, len, 0);
-
-	if (rcvd < 0)    // receive error
-		std::cout << "recv error: "<< strerror(errno) << std::endl;
-	else if (rcvd == 0)    // receive socket closed
-		fprintf(stderr,"Client disconnected upexpectedly.\n");
-	else    // message received
+	int done = 0;
+	
+	while(1)
 	{
+		int len = 1024;
+		char mesg[len], *reqline[3], data_to_send[BYTES], path[100];
+		int rcvd, bytes_read, ofd;
+
+		memset( (void*)mesg, (int)'\0', len);
+
+		rcvd = recv(fd, mesg, len, 0);
+		if (rcvd == -1)    // receive error
+		{
+			if (errno != EAGAIN)
+			{
+				std::cout << "recv error: "<< strerror(errno) << std::endl;
+				done = 1;
+			}
+			break;
+		}
+		else if (rcvd == 0)    // receive socket closed
+		{
+			fprintf(stderr,"Client disconnected upexpectedly.\n");
+			done = 1;
+			break;
+		}
 		printf("%s", mesg);
 		reqline[0] = strtok (mesg, " \t\n");
 		if (strncmp(reqline[0], "GET\0", 4) == 0)
@@ -179,11 +191,9 @@ void Server::respond(int fd)
 			{
 				if (strncmp(reqline[1], "/\0", 2) == 0)
 					reqline[1] = (char*)"/index.html";        //if no file is specified, index.html will be opened by default (like it happens in APACHE)
-
 				strcpy(path, ROOT_);
 				strcpy(&path[strlen(ROOT_)], reqline[1]);
 				printf("file: %s\n", path);
-
 				if ((ofd = open(path, O_RDONLY)) != -1 )    //FILE FOUND
 				{
 					send(fd, "HTTP/1.0 200 OK\n\n", 17, 0);
@@ -194,11 +204,13 @@ void Server::respond(int fd)
 			}
 		}
 	}
-
-	//Closing SOCKET
-	shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
-	close(fd);
-	fd = -1;
+	if(done)
+	{
+		//Closing SOCKET
+		shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
+		close(fd);
+		fd = -1;
+	}
 }
 
 void Server::make_non_blocking(int fd)
