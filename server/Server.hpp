@@ -5,8 +5,8 @@
 #ifndef _SERVER_
 #define _SERVER_
 
-#define CONNMAX 10000
-#define BYTES 1024
+#define CONNMAX 1024
+#define BYTES 16384
 #define PORT "8080" //standart http port
 
 

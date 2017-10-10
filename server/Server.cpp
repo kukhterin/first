@@ -25,7 +25,7 @@ Server::Server(): ROOT_(getenv("PWD"))
 		exit(-1);
 	}
 	
-	if((efd_ = epoll_create1(0)) == -1)
+	if((efd_ = epoll_create(CONNMAX)) == -1)
     {
       perror ("epoll_create");
       exit(-1);
@@ -103,9 +103,6 @@ Server::Server(): ROOT_(getenv("PWD"))
 	close (listenfd_);
 }
 	
-	
-	
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Server::startServer()
@@ -177,39 +174,39 @@ void Server::respond(int fd)
 			done = 1;
 			break;
 		}
-		printf("%s", mesg);
-		reqline[0] = strtok (mesg, " \t\n");
-		if (strncmp(reqline[0], "GET\0", 4) == 0)
+		else
 		{
-			reqline[1] = strtok (NULL, " \t");
-			reqline[2] = strtok (NULL, " \t\n");
-			if (strncmp( reqline[2], "HTTP/1.0", 8) != 0 && strncmp( reqline[2], "HTTP/1.1", 8) != 0 )
+			printf("%s", mesg);
+			reqline[0] = strtok (mesg, " \t\n");
+			if (strncmp(reqline[0], "GET\0", 4) == 0)
 			{
-				write(fd, "HTTP/1.0 400 Bad Request\n", 25);
-			}
-			else
-			{
-				if (strncmp(reqline[1], "/\0", 2) == 0)
-					reqline[1] = (char*)"/index.html";        //if no file is specified, index.html will be opened by default (like it happens in APACHE)
-				strcpy(path, ROOT_);
-				strcpy(&path[strlen(ROOT_)], reqline[1]);
-				printf("file: %s\n", path);
-				if ((ofd = open(path, O_RDONLY)) != -1 )    //FILE FOUND
+				reqline[1] = strtok (NULL, " \t");
+				reqline[2] = strtok (NULL, " \t\n");
+				if (strncmp( reqline[2], "HTTP/1.0", 8) != 0 && strncmp( reqline[2], "HTTP/1.1", 8) != 0 )
 				{
-					send(fd, "HTTP/1.0 200 OK\n\n", 17, 0);
-					while ( (bytes_read = read(ofd, data_to_send, BYTES)) > 0 )
-						write (fd, data_to_send, bytes_read);
+					write(fd, "HTTP/1.0 400 Bad Request\n", 25);
 				}
-				else    write(fd, "HTTP/1.0 404 Not Found\n", 23); //FILE NOT FOUND
+				else
+				{
+					if (strncmp(reqline[1], "/\0", 2) == 0)
+						reqline[1] = (char*)"/index.html";        //if no file is specified, index.html will be opened by default (like it happens in APACHE)
+					strcpy(path, ROOT_);
+					strcpy(&path[strlen(ROOT_)], reqline[1]);
+					printf("file: %s\n", path);
+					if ((ofd = open(path, O_RDONLY)) != -1 )    //FILE FOUND
+					{
+						send(fd, "HTTP/1.0 200 OK\n\n", 17, 0);
+						while ( (bytes_read = read(ofd, data_to_send, BYTES)) > 0 )
+							write (fd, data_to_send, bytes_read);
+					}
+					else    write(fd, "HTTP/1.0 404 Not Found\n", 23); //FILE NOT FOUND
+				}
 			}
 		}
-	}
-	if(done)
-	{
 		//Closing SOCKET
 		shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
 		close(fd);
-		fd = -1;
+		return;
 	}
 }
 
@@ -232,5 +229,7 @@ void Server::make_non_blocking(int fd)
 		exit(-1);
 		}
 }
+
+
 
 
