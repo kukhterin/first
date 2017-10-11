@@ -6,8 +6,8 @@
 #define _SERVER_
 
 #define CONNMAX 1024
-#define BYTES 16384
-#define PORT "8080" //standart http port
+#define BYTES 1024
+#define PORT "80" //standart http port
 
 
 class Server
@@ -23,10 +23,11 @@ private:
 	
 public:
 	Server();
-	//~Server();
+	~Server();
 	void startServer();
 	void respond(int);
 	void make_non_blocking(int);
+	void get();
 };
 
 #endif

@@ -47,6 +47,62 @@ Server::Server(): ROOT_(getenv("PWD"))
 	
 	/* The event loop */
 	
+	get();
+}
+	
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Server::~Server()
+{
+	free (events_);
+	close (listenfd_);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Server::startServer()
+{
+	struct addrinfo hints, *res, *rp;
+	// getaddrinfo for host
+	memset (&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;						//for wildcard IP address 
+	if (getaddrinfo(NULL, PORT, &hints, &res) != 0)
+	{
+		perror ("getaddrinfo() error");
+		exit(-1);
+	}
+
+	/* getaddrinfo() returns a list of address structures.
+              Try each address until we successfully bind(2).
+              If socket(2) (or bind(2)) fails, we (close the socket
+              and) try the next address. */
+
+	for (rp = res; rp != NULL; rp = rp->ai_next)
+	{
+		listenfd_ = socket (rp->ai_family, rp->ai_socktype, 0);
+		if (listenfd_ == -1) 
+			continue;
+		
+		if (bind(listenfd_, rp->ai_addr, rp->ai_addrlen) == 0) 
+			break; //success
+			
+		close(listenfd_);
+	}
+	if (rp == NULL) 					//no address succeeded 
+	{
+		fprintf(stderr, "Could not bind\n");
+		exit(-1);
+	}
+
+	freeaddrinfo(res); 					//no longer needed
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Server::get()
+{
 	while (1)
     {
 		int n, i;
@@ -101,50 +157,6 @@ Server::Server(): ROOT_(getenv("PWD"))
 			}
 		}
 	}
-	
-	free (events_);
-	close (listenfd_);
-}
-	
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Server::startServer()
-{
-	struct addrinfo hints, *res, *rp;
-	// getaddrinfo for host
-	memset (&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;						//for wildcard IP address 
-	if (getaddrinfo(NULL, PORT, &hints, &res) != 0)
-	{
-		perror ("getaddrinfo() error");
-		exit(-1);
-	}
-
-	/* getaddrinfo() returns a list of address structures.
-              Try each address until we successfully bind(2).
-              If socket(2) (or bind(2)) fails, we (close the socket
-              and) try the next address. */
-
-	for (rp = res; rp != NULL; rp = rp->ai_next)
-	{
-		listenfd_ = socket (rp->ai_family, rp->ai_socktype, 0);
-		if (listenfd_ == -1) 
-			continue;
-		
-		if (bind(listenfd_, rp->ai_addr, rp->ai_addrlen) == 0) 
-			break; //success
-			
-		close(listenfd_);
-	}
-	if (rp == NULL) 					//no address succeeded 
-	{
-		fprintf(stderr, "Could not bind\n");
-		exit(-1);
-	}
-
-	freeaddrinfo(res); 					//no longer needed
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,6 +178,8 @@ void Server::respond(int fd)
 			if (errno != EAGAIN)
 			{
 				std::cout << "recv error: "<< strerror(errno) << std::endl;
+				shutdown (fd, SHUT_RDWR);
+				close(fd);
 				break;
 			}
 			break;
@@ -173,6 +187,8 @@ void Server::respond(int fd)
 		else if (rcvd == 0)    // receive socket closed
 		{
 			//fprintf(stderr,"Client disconnected upexpectedly.\n");
+			shutdown (fd, SHUT_RDWR);
+			close(fd);
 			break;
 		}
 		else
@@ -186,7 +202,7 @@ void Server::respond(int fd)
 				if (strncmp( reqline[2], "HTTP/1.0", 8) != 0 && strncmp( reqline[2], "HTTP/1.1", 8) != 0 )
 				{
 					write(fd, "HTTP/1.0 400 Bad Request\n", 25);
-					shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
+					shutdown (fd, SHUT_RDWR);
 					close(fd);
 					break;
 				}
@@ -203,7 +219,7 @@ void Server::respond(int fd)
 						while ( (bytes_read = read(ofd, data_to_send, BYTES)) > 0 )
 							write (fd, data_to_send, bytes_read);
 						close(ofd);
-						shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
+						shutdown (fd, SHUT_RDWR);
 						close(fd);
 						break;
 					}
@@ -211,7 +227,7 @@ void Server::respond(int fd)
 					{
 						write(fd, "HTTP/1.0 404 Not Found\n", 23); //FILE NOT FOUND
 						close(ofd);
-						shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
+						shutdown (fd, SHUT_RDWR);
 						close(fd);
 						break;
 					}
