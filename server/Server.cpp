@@ -166,7 +166,7 @@ void Server::respond(int fd)
 	
 	while(1)
 	{
-		int len = 1024;
+		int len = 16384;
 		char mesg[len], *reqline[3], data_to_send[BYTES], path[100];
 		int rcvd, bytes_read, ofd;
 

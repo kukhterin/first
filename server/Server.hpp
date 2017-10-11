@@ -6,7 +6,7 @@
 #define _SERVER_
 
 #define CONNMAX 1024
-#define BYTES 1024
+#define BYTES 16384
 #define PORT "80" //standart http port
 
 
