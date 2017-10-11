@@ -11,8 +11,9 @@
 #include <errno.h>
 #include <iostream>
 
+
 Server::Server(): ROOT_(getenv("PWD"))
-{	
+{
 	printf("Server started at port #%s with root directory as %s\n", PORT, ROOT_);
 	
 	startServer();
@@ -96,9 +97,11 @@ Server::Server(): ROOT_(getenv("PWD"))
 			else
 			{
 				respond(events_[i].data.fd);
+				continue;
 			}
 		}
 	}
+	
 	free (events_);
 	close (listenfd_);
 }
@@ -148,7 +151,6 @@ void Server::startServer()
 
 void Server::respond(int fd)
 {
-	int done = 0;
 	
 	while(1)
 	{
@@ -164,14 +166,13 @@ void Server::respond(int fd)
 			if (errno != EAGAIN)
 			{
 				std::cout << "recv error: "<< strerror(errno) << std::endl;
-				done = 1;
+				break;
 			}
 			break;
 		}
 		else if (rcvd == 0)    // receive socket closed
 		{
-			fprintf(stderr,"Client disconnected upexpectedly.\n");
-			done = 1;
+			//fprintf(stderr,"Client disconnected upexpectedly.\n");
 			break;
 		}
 		else
@@ -185,6 +186,9 @@ void Server::respond(int fd)
 				if (strncmp( reqline[2], "HTTP/1.0", 8) != 0 && strncmp( reqline[2], "HTTP/1.1", 8) != 0 )
 				{
 					write(fd, "HTTP/1.0 400 Bad Request\n", 25);
+					shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
+					close(fd);
+					break;
 				}
 				else
 				{
@@ -198,17 +202,27 @@ void Server::respond(int fd)
 						send(fd, "HTTP/1.0 200 OK\n\n", 17, 0);
 						while ( (bytes_read = read(ofd, data_to_send, BYTES)) > 0 )
 							write (fd, data_to_send, bytes_read);
+						close(ofd);
+						shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
+						close(fd);
+						break;
 					}
-					else    write(fd, "HTTP/1.0 404 Not Found\n", 23); //FILE NOT FOUND
+					else    
+					{
+						write(fd, "HTTP/1.0 404 Not Found\n", 23); //FILE NOT FOUND
+						close(ofd);
+						shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
+						close(fd);
+						break;
+					}
 				}
 			}
 		}
-		//Closing SOCKET
-		shutdown (fd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
-		close(fd);
-		return;
 	}
+	return;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Server::make_non_blocking(int fd)
 {
@@ -225,11 +239,8 @@ void Server::make_non_blocking(int fd)
 	s = fcntl (fd, F_SETFL, flags);
 	if (s == -1)
 		{
-		perror ("fcntl");
-		exit(-1);
+			perror ("fcntl");
+			exit(-1);
 		}
 }
-
-
-
 
