@@ -14,9 +14,9 @@
 
 Server::Server(): ROOT_(getenv("PWD"))
 {
+	startServer();
 	printf("Server started at port #%s with root directory as %s\n", PORT, ROOT_);
 	
-	startServer();
 	make_non_blocking(listenfd_);
 	// listen for incoming connections
 	
@@ -56,6 +56,7 @@ Server::~Server()
 {
 	free (events_);
 	close (listenfd_);
+	close(efd_);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,10 +164,10 @@ void Server::get()
 
 void Server::respond(int fd)
 {
-	
+	int check = 0;
 	while(1)
 	{
-		int len = 16384;
+		int len = 1024;
 		char mesg[len], *reqline[3], data_to_send[BYTES], path[100];
 		int rcvd, bytes_read, ofd;
 
@@ -178,8 +179,7 @@ void Server::respond(int fd)
 			if (errno != EAGAIN)
 			{
 				std::cout << "recv error: "<< strerror(errno) << std::endl;
-				shutdown (fd, SHUT_RDWR);
-				close(fd);
+				check = 1;
 				break;
 			}
 			break;
@@ -187,8 +187,7 @@ void Server::respond(int fd)
 		else if (rcvd == 0)    // receive socket closed
 		{
 			//fprintf(stderr,"Client disconnected upexpectedly.\n");
-			shutdown (fd, SHUT_RDWR);
-			close(fd);
+			check = 1;
 			break;
 		}
 		else
@@ -202,8 +201,7 @@ void Server::respond(int fd)
 				if (strncmp( reqline[2], "HTTP/1.0", 8) != 0 && strncmp( reqline[2], "HTTP/1.1", 8) != 0 )
 				{
 					write(fd, "HTTP/1.0 400 Bad Request\n", 25);
-					shutdown (fd, SHUT_RDWR);
-					close(fd);
+					check = 1;
 					break;
 				}
 				else
@@ -219,21 +217,24 @@ void Server::respond(int fd)
 						while ( (bytes_read = read(ofd, data_to_send, BYTES)) > 0 )
 							write (fd, data_to_send, bytes_read);
 						close(ofd);
-						shutdown (fd, SHUT_RDWR);
-						close(fd);
+						check = 1;
 						break;
 					}
 					else    
 					{
 						write(fd, "HTTP/1.0 404 Not Found\n", 23); //FILE NOT FOUND
 						close(ofd);
-						shutdown (fd, SHUT_RDWR);
-						close(fd);
+						check = 1;
 						break;
 					}
 				}
 			}
 		}
+	}
+	if(check)
+	{
+		shutdown (fd, SHUT_RDWR);
+		close(fd);
 	}
 	return;
 }

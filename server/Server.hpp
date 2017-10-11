@@ -6,13 +6,15 @@
 #define _SERVER_
 
 #define CONNMAX 1024
-#define BYTES 16384
+#define BYTES 1024
 #define PORT "80" //standart http port
 
 
 class Server
 {
 private:
+	Server(const Server&);
+	void operator=(const Server&);
 	char *ROOT_, c_;
 	int listenfd_, efd_;
 	struct epoll_event event_;
