@@ -1,7 +1,7 @@
 #include "Client.hpp"
 #include <unistd.h>
 
-Client::Client() : file_(""), ready_(false) /*, offset_(0)*/
+Client::Client() : file_(""), ready_(false) , offset_(0)
 {
 
 }
@@ -10,7 +10,6 @@ Client::~Client()
 {
 	close(ofd_);
 }
-
 
 void Client::set_file(std::string file)
 {
@@ -53,7 +52,7 @@ long int Client::get_f_size()
 {
 	return f_size_;
 }
-/*
+
  void Client::set_offset(off_t offset)
 {
 	offset_ = offset;
@@ -63,4 +62,4 @@ off_t Client::get_offset()
 {
 	return offset_;
 }
-*/
+

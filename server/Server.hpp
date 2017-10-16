@@ -8,7 +8,7 @@
 #define _SERVER_
 
 #define CONNMAX 1024
-#define BYTES 1024
+#define BYTES 512
 #define PORT "80" //standart http port
 
 
@@ -30,7 +30,7 @@ public:
 	Server();
 	~Server();
 	void startServer();
-	void respond(int);
+	void respond(const int);
 	void make_non_blocking(int);
 	void get();
 	ssize_t writen(int, const void *, size_t);

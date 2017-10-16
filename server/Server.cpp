@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <iostream>
 #include <utility>
-#include <sys/sendfile.h>
+#include <sys/ioctl.h>
 
 Server::Server(): ROOT_(getenv("PWD"))
 {
@@ -165,7 +165,7 @@ void Server::get()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Server::respond(int fd)
+void Server::respond(const int fd)
 {	
 	//while(!(c_map_[fd].is_ready()))
 	int bytes_read, ofd;
@@ -221,9 +221,9 @@ void Server::respond(int fd)
 					{
 						send(fd, "HTTP/1.0 200 OK\n\n", 17, 0);
 						c_map_[fd].set_ofd(ofd);
-						struct stat file_stat;
-						stat(path, &file_stat);
-						c_map_[fd].set_f_size(file_stat.st_size);
+						//struct stat file_stat;
+						//stat(path, &file_stat);
+						//c_map_[fd].set_f_size(file_stat.st_size);
 					}
 					
 					else    
@@ -236,15 +236,36 @@ void Server::respond(int fd)
 			}
 		}
 	}
-	
 	ofd = c_map_[fd].get_ofd();
-	long f_size = c_map_[fd].get_f_size();
-		
-	f_size -= sendfile(fd, ofd, NULL, f_size);//sendfile update offset, if its set as NULL(?)
-	c_map_[fd].set_f_size(f_size);
-	if(f_size == 0)
-		c_map_[fd].done();
 	
+	off_t offset = c_map_[fd].get_offset();//get offset
+	long f_size = c_map_[fd].get_f_size();
+	int buff_size = 0;
+	int optlen = sizeof(buff_size);
+	
+	if( (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &buff_size, (socklen_t*)&optlen)) < 0)
+		std::cout << "getsockopt: " << strerror(errno) << std::endl;
+	std::cout << "buff_size: " << buff_size << std::endl;
+	
+	std::cout << "offset = " << offset << std::endl;
+	
+	std::cout << "FD now: " << fd << std::endl;
+	if((bytes_read =  pread(ofd, data_to_send, buff_size, offset)) < 0)// this line totally change everything
+		std::cout << "pread: " << strerror(errno) << std::endl;
+	std::cout << "FD now: " << fd << std::endl;
+	
+	if((write(fd, data_to_send, bytes_read)) < 0)
+		std::cout << "write: " << strerror(errno) << std::endl;
+	
+	offset += bytes_read;
+	
+	std::cout << "offset = " << offset << std::endl;
+	
+	if(offset == f_size)
+		c_map_[fd].done();
+	else
+		c_map_[fd].set_offset(offset);
+
 	if((c_map_[fd].is_ready()))
 	{
 		shutdown (fd, SHUT_RDWR);
@@ -279,8 +300,8 @@ void Server::make_non_blocking(int fd)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 /*
+
 ssize_t Server::writen(int fd, const void *vptr, size_t n)
 {
 	size_t n_left;
@@ -329,4 +350,3 @@ ssize_t Server::read_n(int fd, void* vptr, size_t n)
 	return(n - n_left);
 }
 */
-
