@@ -8,7 +8,7 @@
 #define _SERVER_
 
 #define CONNMAX 1024
-#define BYTES 512
+//#define BYTES 1024
 #define PORT "80" //standart http port
 
 
@@ -24,13 +24,14 @@ private:
 	struct sockaddr clientaddr_;
 	socklen_t addrlen_;
 	std::map<int, Client> c_map_;
+	size_t BYTES;
 	 
 	
 public:
 	Server();
 	~Server();
 	void startServer();
-	void respond(const int);
+	void respond(int);
 	void make_non_blocking(int);
 	void get();
 	ssize_t writen(int, const void *, size_t);

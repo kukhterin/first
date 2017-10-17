@@ -47,7 +47,6 @@ Server::Server(): ROOT_(getenv("PWD"))
 	//events_ = (epoll_event*) calloc (CONNMAX, sizeof(event_));
 	
 	/* The event loop */
-	
 	get();
 }
 	
@@ -167,19 +166,18 @@ void Server::get()
 
 void Server::respond(const int fd)
 {	
-	//while(!(c_map_[fd].is_ready()))
-	int bytes_read, ofd;
-	char path[100], data_to_send[BYTES];
 		
 	if((c_map_[fd].get_file()) == "")
 	{
+	
 		int len = 1024;
-		char mesg[len], *reqline[3];
+		char mesg[len], *reqline[3], path[100];
 		int rcvd;
 
 		memset( (void*)mesg, (int)'\0', len);
 		
 		rcvd = recv(fd, mesg, len, 0);
+
 		if ((rcvd == -1) | (rcvd == 0))    // receive error | receive socket closed
 		{
 			if (errno != EAGAIN)
@@ -203,6 +201,7 @@ void Server::respond(const int fd)
 				if (strncmp( reqline[2], "HTTP/1.0", 8) != 0 && strncmp( reqline[2], "HTTP/1.1", 8) != 0 )
 				{
 					write(fd, "HTTP/1.0 400 Bad Request\n", 25);
+					c_map_.erase(fd);
 					shutdown (fd, SHUT_RDWR);
 					close(fd);
 					return;
@@ -215,59 +214,26 @@ void Server::respond(const int fd)
 					strcpy(&path[strlen(ROOT_)], reqline[1]);
 					printf("file: %s\n", path);
 									
-					c_map_[fd].set_file(path);
-					
-					if ((ofd = open(path, O_RDONLY)) != -1 )    //FILE FOUND
-					{
+					if (c_map_[fd].set_file(path))    //FILE FOUND
 						send(fd, "HTTP/1.0 200 OK\n\n", 17, 0);
-						c_map_[fd].set_ofd(ofd);
-						//struct stat file_stat;
-						//stat(path, &file_stat);
-						//c_map_[fd].set_f_size(file_stat.st_size);
-					}
-					
 					else    
 					{
 						write(fd, "HTTP/1.0 404 Not Found\n", 23); //FILE NOT FOUND
-						close(ofd);
-						c_map_[fd].done();
+						c_map_.erase(fd);
+						shutdown (fd, SHUT_RDWR);
+						close(fd);
+						return;
 					}
 				}
 			}
 		}
 	}
-	ofd = c_map_[fd].get_ofd();
 	
-	off_t offset = c_map_[fd].get_offset();//get offset
-	long f_size = c_map_[fd].get_f_size();
-	int buff_size = 0;
-	int optlen = sizeof(buff_size);
+	c_map_[fd].send(fd);
 	
-	if( (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &buff_size, (socklen_t*)&optlen)) < 0)
-		std::cout << "getsockopt: " << strerror(errno) << std::endl;
-	std::cout << "buff_size: " << buff_size << std::endl;
-	
-	std::cout << "offset = " << offset << std::endl;
-	
-	std::cout << "FD now: " << fd << std::endl;
-	if((bytes_read =  pread(ofd, data_to_send, buff_size, offset)) < 0)// this line totally change everything
-		std::cout << "pread: " << strerror(errno) << std::endl;
-	std::cout << "FD now: " << fd << std::endl;
-	
-	if((write(fd, data_to_send, bytes_read)) < 0)
-		std::cout << "write: " << strerror(errno) << std::endl;
-	
-	offset += bytes_read;
-	
-	std::cout << "offset = " << offset << std::endl;
-	
-	if(offset == f_size)
-		c_map_[fd].done();
-	else
-		c_map_[fd].set_offset(offset);
-
 	if((c_map_[fd].is_ready()))
 	{
+		c_map_.erase(fd);
 		shutdown (fd, SHUT_RDWR);
 		close(fd);
 		c_map_.erase(fd);

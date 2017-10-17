@@ -7,25 +7,24 @@
 class Client
 {
 private:
+	void operator=(const Client&);
 	std::string file_;
 	long		f_size_;
-	off_t 		offset_;
-	bool		ready_;
+	int 		offset_;
+	bool		done_;
 	int 		ofd_;
+	int 		bytes_read_;
+	int 		bytes_read;
+	int			buff_size_;
 	
 public:
 	Client();
 	~Client();
-	void 		set_file(std::string);
-	void	 	set_offset(off_t);
+	bool 		set_file(std::string);
 	std::string get_file();
-	off_t 		get_offset();
 	bool		is_ready();
-	void		done();
-	void 		set_ofd(int);
-	int			get_ofd();
-	void		set_f_size(long);
-	long		get_f_size();
+	void 		set_buff_size(const int);
+	void 		send(const int);
 };
 
 #endif
