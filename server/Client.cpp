@@ -21,16 +21,16 @@ void Client::send(const int fd)
 	set_buff_size(fd);
 	char	data_to_send[buff_size_];
 		
-	bytes_read = pread(ofd_, data_to_send, buff_size_, offset_);
-	if(bytes_read < 0)
+	bytes_read_ = pread(ofd_, data_to_send, buff_size_, offset_);
+	if(bytes_read_ < 0)
 	{
 		std::cout << "pread: " << strerror(errno) << std::endl;
 		exit(-1);
 	}
 	
-	offset_ += bytes_read;
+	offset_ += bytes_read_;
 	
-	if( (write (fd, data_to_send, bytes_read)) < 0)
+	if( (write (fd, data_to_send, bytes_read_)) < 0)
 	{
 		std::cout << "write: " << strerror(errno) << std::endl;
 		exit(-1);

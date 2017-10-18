@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <netdb.h>
@@ -11,21 +10,18 @@
 #include <errno.h>
 #include <iostream>
 #include <utility>
-#include <sys/ioctl.h>
+#include <unistd.h>
 
 Server::Server(): ROOT_(getenv("PWD"))
 {
-	startServer();
+	listenfd_.create_and_bind(AI_PASSIVE, PORT);
+	
 	printf("Server started at port #%s with root directory as %s\n", PORT, ROOT_);
 	
-	make_non_blocking(listenfd_);
+	listenfd_.make_non_blocking();
 	// listen for incoming connections
 	
-	if (listen (listenfd_, CONNMAX) == -1 )
-	{
-		perror("listen error");
-		exit(-1);
-	}
+	listenfd_.sock_listen(CONNMAX);
 	
 	if((efd_ = epoll_create(CONNMAX)) == -1)
     {
@@ -55,49 +51,6 @@ Server::Server(): ROOT_(getenv("PWD"))
 Server::~Server()
 {
 	free (events_);
-	close (listenfd_);
-	close(efd_);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Server::startServer()
-{
-	struct addrinfo hints, *res, *rp;
-	// getaddrinfo for host
-	memset (&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;						//for wildcard IP address 
-	if (getaddrinfo(NULL, PORT, &hints, &res) != 0)
-	{
-		perror ("getaddrinfo() error");
-		exit(-1);
-	}
-
-	/* getaddrinfo() returns a list of address structures.
-              Try each address until we successfully bind(2).
-              If socket(2) (or bind(2)) fails, we (close the socket
-              and) try the next address. */
-
-	for (rp = res; rp != NULL; rp = rp->ai_next)
-	{
-		listenfd_ = socket (rp->ai_family, rp->ai_socktype, 0);
-		if (listenfd_ == -1) 
-			continue;
-		
-		if (bind(listenfd_, rp->ai_addr, rp->ai_addrlen) == 0) 
-			break; //success
-			
-		close(listenfd_);
-	}
-	if (rp == NULL) 					//no address succeeded 
-	{
-		fprintf(stderr, "Could not bind\n");
-		exit(-1);
-	}
-
-	freeaddrinfo(res); 					//no longer needed
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,29 +71,18 @@ void Server::get()
 			if ((events_[i].events & EPOLLERR) || (events_[i].events & EPOLLHUP) || (!(events_[i].events & EPOLLIN | EPOLLOUT)))
 			{
 				fprintf (stderr, "epoll error\n");
-				close (events_[i].data.fd);
 				continue;
 			}
 			
-			else if (events_[i].data.fd == listenfd_)
+			else if (listenfd_ == events_[i].data.fd)
 			{
 				while(1)
 				{
-					addrlen_ = sizeof clientaddr_;
-					int client_fd = accept (listenfd_, (struct sockaddr *) &clientaddr_, &addrlen_);
-					if (client_fd == -1)
-					{
-						if ((errno == EAGAIN) || (errno == EWOULDBLOCK))//We have processed all incoming connections.
-						{
-							break;
-						}
-						else
-						{
-							perror("accept() error");
-							break;
-						}
-					}
-					make_non_blocking(client_fd);
+
+					int client_fd = listenfd_.sock_accept();
+					if(client_fd == -1)
+						break;
+					
 					event_.data.fd = client_fd;
 					event_.events = EPOLLIN | EPOLLOUT;
 					if(epoll_ctl(efd_, EPOLL_CTL_ADD, client_fd, &event_) < 0)
@@ -185,7 +127,6 @@ void Server::respond(const int fd)
 				std::cout << "recv error: "<< strerror(errno) << std::endl;
 			}
 			shutdown (fd, SHUT_RDWR);
-			close(fd);
 			return;
 			
 		}
@@ -242,77 +183,3 @@ void Server::respond(const int fd)
 	return;
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Server::make_non_blocking(int fd)
-{
-	int flags, s;
-	
-	flags = fcntl (fd, F_GETFL, 0);
-	if (flags == -1)
-		{
-		perror ("fcntl error");
-		exit(-1);
-		}
-
-	flags |= O_NONBLOCK;
-	s = fcntl (fd, F_SETFL, flags);
-	if (s == -1)
-		{
-			perror ("fcntl");
-			exit(-1);
-		}
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-
-ssize_t Server::writen(int fd, const void *vptr, size_t n)
-{
-	size_t n_left;
-	ssize_t n_written;
-	const char *ptr;
-	
-	ptr = vptr;
-	n_left = n;
-	while (n_left > 0)
-	{
-		if((n_written = write(fd, ptr, n_left)) <= 0)
-		{
-			if(errno == EINTR)
-				n_written = 0;
-			else
-				return (-1);
-		}
-		n_left -= n_written;
-		ptr += n_written;
-	}
-	return(n);
-}
-
-ssize_t Server::read_n(int fd, void* vptr, size_t n)
-{
-	size_t n_left;
-	ssize_t n_read;
-	char *ptr;
-	
-	ptr = vptr;
-	n_left = n;
-	while (n_left > 0)
-	{
-		if((n_read = read(fd, ptr, n_left)) < 0)
-		{
-			if(errno == EINTR)
-				n_read = 0;
-			else
-				return (-1);
-		}
-		else if(n_read == 0)
-			break; //eof
-		n_left -= n_read;
-		ptr += n_read;
-	}
-	return(n - n_left);
-}
-*/

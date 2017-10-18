@@ -14,7 +14,6 @@ private:
 	bool		done_;
 	int 		ofd_;
 	int 		bytes_read_;
-	int 		bytes_read;
 	int			buff_size_;
 	
 public:
