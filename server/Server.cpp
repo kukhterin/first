@@ -30,7 +30,7 @@ Server::~Server()
 
 void Server::start_server()
 {
-	listenfd_.create_and_bind(AI_PASSIVE, PORT);
+	listenfd_.create_and_bind(AI_PASSIVE, (char*)PORT);
 	
 	printf("Server started at port #%s with root directory as %s\n", PORT, ROOT_);
 	
@@ -46,7 +46,7 @@ void Server::start_server()
     }
     
     event_.data.fd = listenfd_;
-	event_.events = EPOLLIN | EPOLLOUT;
+	event_.events = EPOLLIN | EPOLLOUT; // EPOLLIN | EPOLLOUT | EPOLLET
 	int s = epoll_ctl (efd_, EPOLL_CTL_ADD, listenfd_, &event_);
 	if (s == -1)
     {
@@ -89,7 +89,7 @@ void Server::server_wait()
 					int client_fd = listenfd_.sock_accept();
 					if(client_fd == -1)
 						break;
-					
+	
 					event_.data.fd = client_fd;
 					event_.events = EPOLLIN | EPOLLOUT;
 					if(epoll_ctl(efd_, EPOLL_CTL_ADD, client_fd, &event_) < 0)

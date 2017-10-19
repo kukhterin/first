@@ -46,7 +46,12 @@ int Socket::sock_accept()
 	addrlen_ = sizeof clientaddr_;
 	int new_fd = accept (fd_, (struct sockaddr *) &clientaddr_, &addrlen_);
 	if (new_fd == -1)
-		std::cout << "Accept error" << std::endl;
+	{
+		if ((errno != EAGAIN) && (errno != EWOULDBLOCK))
+			std::cout << "Accept error" << std::endl;
+	}
+	
+	
 	return new_fd;
 }
 
