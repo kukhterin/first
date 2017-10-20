@@ -35,9 +35,9 @@ void Server::start_server()
 	printf("Server started at port #%s with root directory as %s\n", PORT, ROOT_);
 	
 	listenfd_.make_non_blocking();
-	// listen for incoming connections
 	
-	listenfd_.sock_listen(CONNMAX);
+	// listen for incoming connections
+		listenfd_.sock_listen(CONNMAX);
 	
 	if((efd_ = epoll_create(CONNMAX)) == -1)
     {
@@ -45,9 +45,9 @@ void Server::start_server()
       exit(-1);
     }
     
-    event_.data.fd = listenfd_;
-	event_.events = EPOLLIN | EPOLLOUT; // EPOLLIN | EPOLLOUT | EPOLLET
-	int s = epoll_ctl (efd_, EPOLL_CTL_ADD, listenfd_, &event_);
+    event_.data.fd = (int)listenfd_;
+	event_.events = EPOLLIN; // EPOLLIN | EPOLLOUT | EPOLLET
+	int s = epoll_ctl (efd_, EPOLL_CTL_ADD, (int)listenfd_, &event_);
 	if (s == -1)
     {
       perror ("epoll_ctl error\n");
@@ -56,7 +56,6 @@ void Server::start_server()
     
     events_ = (epoll_event*)calloc (CONNMAX, sizeof(event_));
 	/* Buffer where events are returned */
-	//events_ = (epoll_event*) calloc (CONNMAX, sizeof(event_));
 	
 }
 
@@ -77,21 +76,23 @@ void Server::server_wait()
 		{
 			if ((events_[i].events & EPOLLERR) || (events_[i].events & EPOLLHUP) || (!(events_[i].events & EPOLLIN | EPOLLOUT)))
 			{
-				fprintf (stderr, "epoll error\n");
+				
+				std::cout << "Epoll error" << strerror(errno) << std::endl;
+				close (events_[i].data.fd);
 				continue;
 			}
 			
-			else if (listenfd_ == events_[i].data.fd)
+			else if (events_[i].data.fd == (int)listenfd_)
 			{
 				while(1)
 				{
-
+					
 					int client_fd = listenfd_.sock_accept();
 					if(client_fd == -1)
 						break;
-	
+				
 					event_.data.fd = client_fd;
-					event_.events = EPOLLIN | EPOLLOUT;
+					event_.events = EPOLLIN;
 					if(epoll_ctl(efd_, EPOLL_CTL_ADD, client_fd, &event_) < 0)
 					{
 						fprintf(stderr, "epoll set insertation error: fd = %d", client_fd);
@@ -181,9 +182,10 @@ void Server::respond(const int fd)
 	
 	if((c_map_[fd].is_ready()))
 	{
-		c_map_.erase(fd);
 		shutdown (fd, SHUT_RDWR);
 		close(fd);
+		c_map_.erase(fd);
+
 	}
 	
 	return;

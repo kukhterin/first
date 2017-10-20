@@ -33,6 +33,7 @@ public:
 	void server_wait();
 	ssize_t writen(int, const void *, size_t);
 	ssize_t read_n(int, void *, size_t);
+
 };
 
 #endif
