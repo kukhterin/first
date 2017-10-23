@@ -1,9 +1,6 @@
-#include "Server.hpp"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <netdb.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -11,6 +8,11 @@
 #include <iostream>
 #include <utility>
 #include <unistd.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include "Server.hpp"
 
 Server::Server(): ROOT_(getenv("PWD"))
 {
