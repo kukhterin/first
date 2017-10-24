@@ -14,11 +14,11 @@
 
 #include "Server.hpp"
 
-Server::Server(): ROOT_(getenv("PWD"))
+Server::Server(const int flags, const char* port, int connections): ROOT_(getenv("PWD")), listenfd_(flags, (char*) port, connections), connections_(connections), port_(port)
 {
-	start_server();
+	start();
 	/* The event loop */
-	server_wait();
+	wait();
 }
 	
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,45 +30,38 @@ Server::~Server()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Server::start_server()
+void Server::start()
 {
-	listenfd_.create_and_bind(AI_PASSIVE, (char*)PORT);
-	
-	printf("Server started at port #%s with root directory as %s\n", PORT, ROOT_);
-	
-	listenfd_.make_non_blocking();
-	
-	// listen for incoming connections
-		listenfd_.sock_listen(CONNMAX);
-	
-	if((efd_ = epoll_create(CONNMAX)) == -1)
+	printf("Server started at port #%s with root directory as %s\n", port_.c_str(), ROOT_);
+
+	if((efd_ = epoll_create(connections_)) == -1)
     {
       perror ("epoll_create");
       exit(-1);
     }
     
-    event_.data.fd = (int)listenfd_;
+    event_.data.fd = listenfd_.get_fd();
 	event_.events = EPOLLIN; // EPOLLIN | EPOLLOUT | EPOLLET
-	int s = epoll_ctl (efd_, EPOLL_CTL_ADD, (int)listenfd_, &event_);
+	int s = epoll_ctl (efd_, EPOLL_CTL_ADD, listenfd_.get_fd(), &event_);
 	if (s == -1)
     {
       perror ("epoll_ctl error\n");
       exit(-1);
     }
     
-    events_ = (epoll_event*)calloc (CONNMAX, sizeof(event_));
+    events_ = (epoll_event*)calloc (connections_, sizeof(event_));
 	/* Buffer where events are returned */
 	
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Server::server_wait()
+void Server::wait()
 {
 	while (1)
     {
 		int n, i;
-		n = epoll_wait (efd_, events_, CONNMAX, -1);
+		n = epoll_wait (efd_, events_, connections_, -1);
 		if(n < 0)
 		{
 			exit(-1);
@@ -78,18 +71,16 @@ void Server::server_wait()
 		{
 			if ((events_[i].events & EPOLLERR) || (events_[i].events & EPOLLHUP) || (!(events_[i].events & EPOLLIN | EPOLLOUT)))
 			{
-				
 				std::cout << "Epoll error" << strerror(errno) << std::endl;
 				close (events_[i].data.fd);
 				continue;
 			}
 			
-			else if (events_[i].data.fd == (int)listenfd_)
+			else if (events_[i].data.fd == listenfd_.get_fd())
 			{
 				while(1)
 				{
-					
-					int client_fd = listenfd_.sock_accept();
+					int client_fd = listenfd_.Accept();
 					if(client_fd == -1)
 						break;
 				
@@ -107,7 +98,7 @@ void Server::server_wait()
 			}
 			else
 			{
-				respond(events_[i].data.fd);
+				Send(events_[i].data.fd);
 				continue;
 			}
 		}
@@ -116,12 +107,11 @@ void Server::server_wait()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Server::respond(const int fd)
+void Server::Send(const int fd)
 {	
 		
 	if((c_map_[fd].get_file()) == "")
 	{
-	
 		int len = 1024;
 		char mesg[len], *reqline[3], path[100];
 		int rcvd;
@@ -138,7 +128,6 @@ void Server::respond(const int fd)
 			}
 			shutdown (fd, SHUT_RDWR);
 			return;
-			
 		}
 		
 		else
@@ -165,7 +154,7 @@ void Server::respond(const int fd)
 					strcpy(&path[strlen(ROOT_)], reqline[1]);
 					printf("file: %s\n", path);
 									
-					if (c_map_[fd].set_file(path))    //FILE FOUND
+					if (c_map_[fd].set_sending_file(path))    //FILE FOUND
 						send(fd, "HTTP/1.0 200 OK\n\n", 17, 0);
 					else    
 					{
@@ -187,7 +176,6 @@ void Server::respond(const int fd)
 		shutdown (fd, SHUT_RDWR);
 		close(fd);
 		c_map_.erase(fd);
-
 	}
 	
 	return;

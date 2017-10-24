@@ -8,15 +8,31 @@
 #include <string.h>
 #include <errno.h>
 
-Socket::Socket()
-{}
+Socket::Socket(const int flags, const char* port, const int connections)
+{
+	create_and_bind(flags, port);
+	make_non_blocking();
+	Listen(connections);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Socket::~Socket()
 {
-	
-	std::cout << "SOCKET IS CLOSE" << std::endl;
 	close(fd_);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Socket::Socket(const Socket& socket)
+{
+	if(fd_ != socket.fd_)
+		fd_ = socket.fd_;
+	else
+		std::cout << "Same socket!" << std::endl;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Socket::operator=(const Socket& socket)
 {
@@ -26,26 +42,23 @@ void Socket::operator=(const Socket& socket)
 		std::cout << "Same socket!" << std::endl;
 }
 
-void Socket::operator=(const int& i)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Socket::Listen(const int connections) const
 {
-	fd_ = i;
+	if (listen(fd_, connections) == -1 )
+	{
+		std::cout << "Listen error: " << strerror(errno) << std::endl;;
+		exit(-1);
+	}
 }
 
-bool Socket::operator==(const Socket& sock)
-{
-	return fd_ == sock.fd_;
-}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Socket::operator==(int i)
-{
-	return fd_ == i;
-}
-
-
-int Socket::sock_accept()
+int Socket::Accept()
 {
 	addrlen_ = sizeof sockaddr_;
-	int new_fd = accept (fd_, (struct sockaddr *) &sockaddr_, &addrlen_);
+	int new_fd = accept(fd_, (struct sockaddr *) &sockaddr_, &addrlen_);
 	if (new_fd == -1)
 	{
 		if ((errno != EAGAIN) && (errno != EWOULDBLOCK))
@@ -55,7 +68,16 @@ int Socket::sock_accept()
 	return new_fd;
 }
 
-void Socket::create_and_bind(int flags, char* port)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int Socket::get_fd()
+{
+	return fd_;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Socket::create_and_bind(const int flags, const char* port)
 {
 	struct addrinfo hints, *res, *rp;
 	// getaddrinfo for host
@@ -68,11 +90,6 @@ void Socket::create_and_bind(int flags, char* port)
 		s_err("getaddrinfo() error");
 		exit(-1);
 	}
-
-	/* getaddrinfo() returns a list of address structures.
-              Try each address until we successfully bind(2).
-              If socket(2) (or bind(2)) fails, we (close the socket
-              and) try the next address. */
 
 	for (rp = res; rp != NULL; rp = rp->ai_next)
 	{
@@ -88,18 +105,10 @@ void Socket::create_and_bind(int flags, char* port)
 		s_err("Could not bind");
 		exit(-1);
 	}
-
 	freeaddrinfo(res); 					//no longer needed
 }
 
-void Socket::sock_listen(int connections)
-{
-	if (listen (fd_, connections) == -1 )
-	{
-		s_err("listen error");
-		exit(-1);
-	}
-}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Socket::make_non_blocking()
 {
@@ -121,47 +130,9 @@ void Socket::make_non_blocking()
 		}
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Socket::s_err(std::string s)
 {
 	std::cout << s << ": " << strerror(errno) << std::endl;
 }
-
-/*
-int Socket::accept()
-{
-	int		n;
-again:
-	if ( (n = accept(fd_, sockaddr_, addrlen_)) < 0) 
-	{
-#ifdef	EPROTO
-		if (errno == EPROTO || errno == ECONNABORTED)
-#else
-		if (errno == ECONNABORTED)
-#endif
-			goto again;
-		else
-			s_err("Accept error");
-	}
-	return n;
-}
-
-void Socket:: bind()
-{
-	if (bind(fd_, sockaddr_, addrlen_) < 0)
-		s_err("Bind error");
-}
-
-void Socket::connect()
-{
-	if (connect(fd_, sockaddr_, addrlen_) < 0)
-		std::cout << "Connect error" << std::endl;
-}
-
-void Socket::listen(int backlog)
-{
-
-	if (listen(fd_, backlog) < 0)
-		s_err("Listen error");
-}
-*/

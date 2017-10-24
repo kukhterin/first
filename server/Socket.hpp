@@ -5,33 +5,35 @@
 #ifndef _SOCKET_
 #define _SOCKET_
 
-void make_non_blocking(int);
+typedef int flags;
+typedef int connections;
+typedef int file_descriptor;
+typedef const char* port;
+typedef std::string error;
 
 class Socket 
 {
 public:
 	
-	Socket();
+	Socket(const flags, const port, const connections);
 	~Socket();
-	
+	Socket(const Socket&);
 	void operator=(const Socket&);
-	void operator=(const int&);
-	bool operator==(const Socket&);
-	bool operator==(int);
-		 operator int(){return fd_;}
-	void s_err(std::string);
-	void sock_listen(int);
-	void create_and_bind(int, char*);
-	int sock_accept();
-	void make_non_blocking();
+	
+	void Listen(const file_descriptor) const;
+	int Accept();
+	int get_fd();
 	
 private:
-	
-	Socket(const Socket&);
 	
 	int fd_;
 	struct sockaddr sockaddr_;
 	socklen_t addrlen_;
+		
+	void create_and_bind(const flags, const port);
+	void make_non_blocking();
+	void s_err(error);
+
 	
 };
 
